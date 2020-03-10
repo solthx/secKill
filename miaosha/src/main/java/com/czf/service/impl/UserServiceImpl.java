@@ -8,12 +8,15 @@ import com.czf.error.BusinessException;
 import com.czf.error.EmBusinessError;
 import com.czf.service.UserService;
 import com.czf.service.model.UserModel;
+import com.czf.validator.ValidationResult;
+import com.czf.validator.ValidatorImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
 
 /**
  * @author czf
@@ -27,6 +30,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserPasswordDOMapper userPasswordDOMapper;
+
+    @Autowired
+    private ValidatorImpl validator;
 
     @Override
     public UserModel getUserById(Integer id) {
@@ -49,21 +55,23 @@ public class UserServiceImpl implements UserService {
     public void register(UserModel userModel) throws BusinessException {
         if (userModel==null)
             throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR);
-        if (StringUtils.isEmpty(userModel.getName())
-                || userModel.getAge()==null
-                || userModel.getGender()==null
-                || StringUtils.isEmpty(userModel.getTelphone())){
-            throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR,"注册参数缺失或不合法！");
+//        if (StringUtils.isEmpty(userModel.getName())
+//                || userModel.getAge()==null
+//                || userModel.getGender()==null
+//                || StringUtils.isEmpty(userModel.getTelphone())){
+//            throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR,"注册参数缺失或不合法！");
+//        }
+        ValidationResult result=null;
+        try{
+            result = validator.validate(userModel);
+        }catch(Exception e){
+            e.printStackTrace();
         }
+        if (result!=null && result.isHasErrors())
+            throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR, result.getErrMsg());
         // 实现model->dao
         UserDO userDO = convertFromModel(userModel);
-        try{
-            userDOMapper.insertSelective(userDO);
-        }catch (DuplicateKeyException ex){
-            System.out.println("....");
-            ex.printStackTrace();
-            throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR, "手机号已注册");
-        }
+        userDOMapper.insertSelective(userDO);
         userModel.setUid(userDO.getUid());
         UserPasswordDO userPasswordDO = convertPassWordFromModel(userModel);
         userPasswordDOMapper.insertSelective(userPasswordDO);
