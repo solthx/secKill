@@ -16,38 +16,17 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="control-label">验证码</label>
-                <div>
-                    <input class="form-control" type="text" placeholder="验证码" name="otpCode" id="otpCode"/>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="control-label">用户昵称</label>
-                <div>
-                    <input class="form-control" type="text" placeholder="用户昵称" name="name" id="name"/>
-                </div>
-            </div>
-            <div class="form-group">
                 <label class="control-label">密码</label>
                 <div>
                     <input class="form-control" type="password" placeholder="密码" name="password" id="password"/>
                 </div>
             </div>
-            <div class="form-group">
-                <label class="control-label">性别</label>
-                <div>
-                    <input class="form-control" type="text" placeholder="性别" name="gender" id="gender"/>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="control-label">年龄</label>
-                <div>
-                    <input class="form-control" type="text" placeholder="年龄" name="age" id="age"/>
-                </div>
-            </div>
             <div class="form-actions">
+                <button class="btn green" id="login" type="submit">
+                    登陆
+                </button>
                 <button class="btn blue" id="register" type="submit">
-                    提交注册
+                    注册
                 </button>
             </div>
         </div>
@@ -55,13 +34,13 @@
 
     <script>
         jQuery(document).ready(function () {
-            $("#register").on("click",function () {
+            $("#register").on("click",function (){
+                window.location.href="file:///Users/apple/Desktop/github/miaosha/secKill/html/getotp.html"
+            });
+
+            $("#login").on("click",function () {
                 var telphone = $("#telphone").val();
                 var password = $("#password").val();
-                var age = $("#age").val();
-                var name = $("#name").val();
-                var gender = $("#gender").val();
-                var otpCode = $("#otpCode").val();
                 if(telphone==null || telphone==""){
                     alert("手机号不能为空");
                     return false;
@@ -70,44 +49,24 @@
                     alert("密码不能为空");
                     return false;
                 }
-                if(age==null || age==""){
-                    alert("年龄不能为空");
-                    return false;
-                }
-                if(gender==null || gender==""){
-                    alert("性别不能为空");
-                    return false;
-                }
-                if(otpCode==null || otpCode==""){
-                    alert("验证码不能为空");
-                    return false;
-                }
-                if(name==null || name==""){
-                    alert("姓名不能为空");
-                    return false;
-                }
                 $.ajax({
                     type:"POST",
                     contentType:"application/x-www-form-urlencoded",
-                    url:"http://localhost:8090/user/register",
+                    url:"http://localhost:8090/user/login",
                     data:{
                         "telphone":telphone,
-                        "age":age,
-                        "name":name,
-                        "gender":gender,
-                        "password":password,
-                        "otpCode":otpCode
+                        "password":password
                     },
                     xhrFields:{withCredentials:true},
                     success:function (data) {
                         if (data.status=="success"){
-                            alert("注册成功！");
+                            alert("登陆成功！");
                         }else{
-                            alert("注册失败，是因为"+data.data.errMsg);
+                            alert("登陆失败，是因为"+data.data.errMsg);
                         }
                     },
                     error:function (data) {
-                        alert("otp发送失败, 原因为"+data.responseText);
+                        alert("登陆失败, 原因为"+data.responseText);
                     }
                 })
             })
