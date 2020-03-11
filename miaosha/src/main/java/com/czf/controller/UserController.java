@@ -26,7 +26,7 @@ import java.util.Random;
  * @author czf
  * @Date 2020/3/9 12:38 下午
  */
-@Controller("user")
+@Controller("user_controller")
 @RequestMapping("/user")
 @CrossOrigin(allowCredentials = "true", allowedHeaders = "*") // 解决ajax的跨域请求问题
 public class UserController extends BaseController {

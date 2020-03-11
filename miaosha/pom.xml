@@ -106,7 +106,7 @@
             <!-- 允许移动生成的文件 -->
             <verbose>true</verbose>
             <!-- 一般要求false，不能让生成的文件覆写已有的文件！ -->
-            <overwrite>true</overwrite>
+            <overwrite>false</overwrite>
             <configurationFile>
               src/main/resources/mybatis-generator.xml
             </configurationFile>

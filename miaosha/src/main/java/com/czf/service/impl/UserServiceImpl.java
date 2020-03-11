@@ -75,7 +75,6 @@ public class UserServiceImpl implements UserService {
         userModel.setUid(userDO.getUid());
         UserPasswordDO userPasswordDO = convertPassWordFromModel(userModel);
         userPasswordDOMapper.insertSelective(userPasswordDO);
-
         return;
     }
 
