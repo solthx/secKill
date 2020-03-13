@@ -1,6 +1,7 @@
 package com.czf.dao;
 
 import com.czf.dataobject.UserDO;
+import org.apache.ibatis.annotations.Param;
 
 public interface UserDOMapper {
     /**
@@ -40,7 +41,7 @@ public interface UserDOMapper {
      * @param telphone
      * @return
      */
-    UserDO selectByTelphone(String telphone);
+    UserDO selectByTelphone(@Param("telphone") String telphone);
 
 
 

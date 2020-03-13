@@ -29,4 +29,13 @@ public interface ItemService {
      * @return
      */
     ItemModel getItemById(Integer id);
+
+    /**
+     * 库存扣减
+     * @param itemId
+     * @return
+     */
+    boolean decreaseStock(Integer itemId, Integer amount) throws BusinessException;
+
+    int increaseSales(Integer itemId, Integer amount);
 }

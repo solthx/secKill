@@ -1,6 +1,7 @@
 package com.czf.dao;
 
 import com.czf.dataobject.ItemStockDO;
+import org.apache.ibatis.annotations.Param;
 
 public interface ItemStockDOMapper {
     /**
@@ -51,4 +52,6 @@ public interface ItemStockDOMapper {
      * @mbg.generated Tue Mar 10 23:07:57 CST 2020
      */
     int updateByPrimaryKey(ItemStockDO record);
+
+    int decreaseStock(@Param("itemId") Integer itemId, @Param("amount") Integer amount);
 }

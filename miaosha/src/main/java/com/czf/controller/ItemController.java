@@ -5,12 +5,17 @@ import com.czf.error.BusinessException;
 import com.czf.response.CommonReturnType;
 import com.czf.service.ItemService;
 import com.czf.service.model.ItemModel;
+import com.czf.service.model.PromoModel;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author czf
@@ -59,6 +64,14 @@ public class ItemController extends BaseController {
             return null;
         ItemVO itemVO = new ItemVO();
         BeanUtils.copyProperties(itemModel, itemVO);
+        if (itemModel.getPromoModel()!=null) {
+            PromoModel promoModel = itemModel.getPromoModel();
+            itemVO.setPromoStatus(promoModel.getStatus());
+            itemVO.setPromoId(promoModel.getId());
+            itemVO.setStartDate(promoModel.getStartDate().toString(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")));
+            itemVO.setPromoPrice(promoModel.getPromoItemPrice());
+        }else
+            itemVO.setPromoStatus(0);
         return itemVO;
     }
 
@@ -74,5 +87,20 @@ public class ItemController extends BaseController {
         ItemModel itemModel = itemService.getItemById(id);
         ItemVO itemVO = convertVOFromModel(itemModel);
         return CommonReturnType.create(itemVO);
+    }
+
+    /**
+     * 商品列表浏览
+     * @return
+     */
+    @RequestMapping(value = "/list", method = {RequestMethod.GET})
+    @ResponseBody
+    public CommonReturnType listItem(){
+        List<ItemModel> itemModelList = itemService.listItems();
+        // 使用stream API将itemModelList转化成itemVOList
+        List<ItemVO> itemVOList = itemModelList.stream().map(itemModel -> {
+            return convertVOFromModel(itemModel);
+        }).collect(Collectors.toList());
+        return CommonReturnType.create(itemVOList);
     }
 }

@@ -1,6 +1,9 @@
 package com.czf.dao;
 
 import com.czf.dataobject.ItemDO;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 public interface ItemDOMapper {
     /**
@@ -50,4 +53,9 @@ public interface ItemDOMapper {
      * @mbg.generated Tue Mar 10 23:07:57 CST 2020
      */
     int updateByPrimaryKey(ItemDO record);
+
+    List<ItemDO> listItem();
+
+    int increaseSales(@Param("id")Integer itemId, @Param("amount")Integer amount);
+
 }

@@ -1,6 +1,7 @@
 package com.czf.controller.viewobject;
 
 import lombok.Data;
+import org.joda.time.DateTime;
 
 import java.math.BigDecimal;
 
@@ -31,4 +32,16 @@ public class ItemVO {
 
     // 商品图片的url
     private String imgUrl;
+
+    // 0：没有秒杀活动，1表示秒杀活动待开始，2表示秒杀活动进行中
+    private Integer promoStatus;
+
+    // 秒杀活动价格
+    private BigDecimal promoPrice;
+
+    // 秒杀商品ID
+    private Integer promoId;
+
+    // 秒杀活动开始时间，用于倒计时
+    private String startDate;
 }

@@ -2,12 +2,16 @@ package com.czf.service.impl;
 
 import com.czf.dao.ItemDOMapper;
 import com.czf.dao.ItemStockDOMapper;
+import com.czf.dao.PromoDOMapper;
 import com.czf.dataobject.ItemDO;
 import com.czf.dataobject.ItemStockDO;
+import com.czf.dataobject.PromoDO;
 import com.czf.error.BusinessException;
 import com.czf.error.EmBusinessError;
 import com.czf.service.ItemService;
+import com.czf.service.PromoService;
 import com.czf.service.model.ItemModel;
+import com.czf.service.model.PromoModel;
 import com.czf.validator.ValidationResult;
 import com.czf.validator.ValidatorImpl;
 import org.springframework.beans.BeanUtils;
@@ -17,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author czf
@@ -39,6 +44,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private ItemStockDOMapper itemStockDOMapper;
+
+    @Autowired
+    private PromoService promoService;
 
     /**
      * 创建一个商品, 并写入数据库
@@ -103,7 +111,13 @@ public class ItemServiceImpl implements ItemService {
      */
     @Override
     public List<ItemModel> listItems() {
-        return null;
+        List<ItemDO> itemDOList = itemDOMapper.listItem();
+        List<ItemModel> itemModelList = itemDOList.stream().map(itemDO -> {
+            ItemStockDO itemStockDO = itemStockDOMapper.selectByItemId(itemDO.getId());
+            ItemModel itemModel = convertModelFromDataObject(itemDO, itemStockDO);
+            return itemModel;
+        }).collect(Collectors.toList());
+        return itemModelList;
     }
 
     /**
@@ -122,7 +136,27 @@ public class ItemServiceImpl implements ItemService {
         ItemStockDO itemStockDO = itemStockDOMapper.selectByItemId(itemDO.getId());
 
         // 将dataobject->model
-        return convertModelFromDataObject(itemDO, itemStockDO);
+        ItemModel itemModel = convertModelFromDataObject(itemDO, itemStockDO);
+
+        // 获取活动商品信息
+        PromoModel promoModel = promoService.getPromoByItemId(itemModel.getId());
+
+        if ( promoModel!=null && promoModel.getStatus().intValue()!=3 )
+            itemModel.setPromoModel(promoModel);
+        return itemModel;
+    }
+
+    /**
+     * 库存扣减
+     *
+     * @param itemId
+     * @return
+     */
+    @Override
+    @Transactional
+    public boolean decreaseStock(Integer itemId, Integer amount) {
+        int affectedRow = itemStockDOMapper.decreaseStock(itemId, amount);
+        return affectedRow>0 ? true : false;
     }
 
     /**
@@ -137,5 +171,16 @@ public class ItemServiceImpl implements ItemService {
         itemModel.setPrice(new BigDecimal(itemDO.getPrice()));
         itemModel.setStock(itemStockDO.getStock());
         return itemModel;
+    }
+
+    /**
+     * 商品销量增加amount
+     * @param itemId
+     * @param amount
+     */
+    @Override
+    @Transactional
+    public int increaseSales(Integer itemId, Integer amount){
+        return itemDOMapper.increaseSales(itemId, amount);
     }
 }

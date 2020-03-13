@@ -143,4 +143,19 @@
       img_url = #{imgUrl,jdbcType=VARCHAR}
     where id = #{id,jdbcType=INTEGER}
   </update>
+
+  <!-- ========================自定义==================== -->
+  <select id="listItem" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from item
+    order by sales desc;
+  </select>
+
+  <update id="increaseSales">
+    update item
+    set sales = sales + #{amount}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
 </mapper>

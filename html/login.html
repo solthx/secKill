@@ -61,6 +61,7 @@
                     success:function (data) {
                         if (data.status=="success"){
                             alert("登陆成功！");
+                            window.location.href="listItem.html";
                         }else{
                             alert("登陆失败，是因为"+data.data.errMsg);
                         }
