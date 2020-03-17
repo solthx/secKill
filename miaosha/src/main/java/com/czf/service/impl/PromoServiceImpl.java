@@ -28,7 +28,6 @@ public class PromoServiceImpl implements PromoService {
     @Override
     public PromoModel getPromoByItemId(Integer itemId) {
         // 获取对应商品的秒杀活动信息
-        System.out.println(itemId);
         PromoDO promoDO =  promoDOMapper.selectByItemId(itemId);
 
         if (promoDO==null)

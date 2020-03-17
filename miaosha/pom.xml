@@ -34,6 +34,26 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+    <!-- redis -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+    <!--springboot 2.0 之后底层连接池采用 Lettuce 作为连接池 导入此包-->
+    <!--Spring Boot 1.0 默认使用的是 Jedis 客户端，2.0 替换成了 Lettuce，-->
+    <!--但如果你从 Spring Boot 1.5.X 切换过来，几乎感受不大差异，-->
+    <!--这是因为 spring-boot-starter-data-redis 为我们隔离了其中的差异性。-->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-pool2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.session</groupId>
+      <artifactId>spring-session-data-redis</artifactId>
+    </dependency>
+    <!-- redis -->
+
+
     <dependency>
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
