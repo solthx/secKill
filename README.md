@@ -11,4 +11,4 @@
 - Nginx
 
 ## 架构层次图
-
+![pic](https://ae01.alicdn.com/kf/Ha41f99ff143a42099dfc4082cddfc8425.png)
