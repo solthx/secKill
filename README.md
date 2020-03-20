@@ -22,7 +22,7 @@
 
 部署环境为4台服务器，一台作为nginx反向代理服务器，两台作为WebServer服务器，一台作为数据仓库, 拓扑图如下:
 
-![pic](https://ae01.alicdn.com/kf/H5df577b731194177b31e960e7b317eb0P.png)
+![pic](https://ae01.alicdn.com/kf/Hcb1e9d3507b840dd8efad801f4fe5d67r.png)
 
 ## 架构层次图
 ![pic](https://ae01.alicdn.com/kf/Ha41f99ff143a42099dfc4082cddfc8425.png)
@@ -73,3 +73,16 @@
                 - 提供了这样一种可控制大小和超时时间的线程安全的Map
                 - 可配置lru策略（置换算法配置）
     - nginx配合lua脚本实现第三级缓存
+        - nginx lua插载点
+            - `init_by_lua`: 系统启动时调用
+            - `init_workder_by_lua`: worker进程启动时调用
+            - `set_by_lua`: nginx变量用复杂lua return
+            - `rewrite_by_lua`: 重写url规则
+            - `access_by_lua`: 权限验证阶段
+            - `content_by_lua`: 内容输出节点
+        - 使用Openresty:
+            - 共享内存字典，所有worker进程均可见，LRU淘汰. 
+                - 速度快，但受内存限制，且会脏读.
+            - 支持Redis
+                - 会多一次网络查询开销去访问数据库服务器上的redis，好处是能够保证缓存数据一致性. （往往这里的缓存是只读操作，可以访问redis的从库，从而减小对主库的压力。
+            
