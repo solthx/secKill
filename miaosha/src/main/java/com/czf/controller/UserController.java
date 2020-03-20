@@ -84,14 +84,20 @@ public class UserController extends BaseController {
      */
     @RequestMapping(value = "/getotp", method = {RequestMethod.POST},consumes = {CONTENT_TYPE_FORMED})
     @ResponseBody
-    public CommonReturnType getOtp(@RequestParam(name="telphone")String telphone){
+    public CommonReturnType getOtp(@RequestParam(name="telphone")String telphone) throws BusinessException {
+        // 是否已经注册过了
+        if (userService.hasRegistered(telphone))
+            throw new BusinessException(EmBusinessError.HAS_REGISTERED);
+
         // 生成OTP验证码，生成随机数 [10000,100000)
         Random random = new Random();
         int randomInt = random.nextInt(90000);
         randomInt += 10000;
         String otpCode = String.valueOf(randomInt);
         // 将OTP验证码绑定到对应当前用户的Session里 ( 分布式场景下里是保存在redis里并定时失效，这里先粗糙的实现一下..
-        httpServletRequest.getSession().setAttribute(telphone, otpCode);
+
+        redisTemplate.opsForValue().set("otp_"+telphone, otpCode);
+        redisTemplate.expire("otp_"+telphone,60, TimeUnit.SECONDS );
 
         // 将OTP验证码通过短信通道发送给用户，需要第三方平台，先省略
         System.out.println("telphone = " + telphone + " & OtpCode = " + otpCode);
@@ -119,7 +125,8 @@ public class UserController extends BaseController {
                                      @RequestParam("password") String password
     ) throws BusinessException, UnsupportedEncodingException, NoSuchAlgorithmException {
         // 先验证otpCode是否符合
-        String inSessionOtpCode = (String)httpServletRequest.getSession().getAttribute(telphone);
+        String inSessionOtpCode = (String)redisTemplate.opsForValue().get("otp_"+telphone);
+
         if ( !com.alibaba.druid.util.StringUtils.equals(inSessionOtpCode,otpCode) )
             throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR, "短信验证码不正确");
         // 用户的注册流程

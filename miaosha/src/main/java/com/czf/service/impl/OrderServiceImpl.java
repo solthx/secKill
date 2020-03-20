@@ -52,7 +52,8 @@ public class OrderServiceImpl implements OrderService {
          *      3. 购买数量是否合法
          */
 
-        ItemModel itemModel = itemService.getItemById(itemId);
+        //ItemModel itemModel = itemService.getItemById(itemId);
+        ItemModel itemModel = itemService.getItemByIdInCache(itemId);
         if ( itemModel==null )
             throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR, "商品信息不存在!");
 

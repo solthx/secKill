@@ -5,6 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -12,7 +13,7 @@ import java.math.BigDecimal;
  * @Date 2020/3/10 10:16 下午
  */
 @Data
-public class ItemModel {
+public class ItemModel implements Serializable {
     // 商品id
     private Integer id;
 

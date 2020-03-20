@@ -3,6 +3,7 @@ package com.czf.service.model;
 import lombok.Data;
 import org.joda.time.DateTime;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -11,7 +12,7 @@ import java.util.Date;
  * @Date 2020/3/12 11:44 下午
  */
 @Data
-public class PromoModel {
+public class PromoModel implements Serializable {
     private Integer id;
 
     // 秒杀活动名称

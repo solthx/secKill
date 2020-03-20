@@ -37,5 +37,19 @@ public interface ItemService {
      */
     boolean decreaseStock(Integer itemId, Integer amount) throws BusinessException;
 
+    /**
+     * 销量增加
+     * @param itemId
+     * @param amount
+     * @return
+     */
     int increaseSales(Integer itemId, Integer amount);
+
+    /**
+     * 根据Id尝试从Redis中获取Item
+     * @param id
+     * @return
+     */
+    ItemModel getItemByIdInCache(Integer id);
+
 }

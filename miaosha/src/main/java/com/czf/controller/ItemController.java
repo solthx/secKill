@@ -3,6 +3,7 @@ package com.czf.controller;
 import com.czf.controller.viewobject.ItemVO;
 import com.czf.error.BusinessException;
 import com.czf.response.CommonReturnType;
+import com.czf.service.CacheService;
 import com.czf.service.ItemService;
 import com.czf.service.model.ItemModel;
 import com.czf.service.model.PromoModel;
@@ -10,11 +11,13 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -28,7 +31,13 @@ import java.util.stream.Collectors;
 public class ItemController extends BaseController {
 
     @Autowired
+    private CacheService cacheService;
+
+    @Autowired
     private ItemService itemService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 创建商品
@@ -84,7 +93,20 @@ public class ItemController extends BaseController {
     @RequestMapping(value = "/get", method = {RequestMethod.GET})
     @ResponseBody
     public CommonReturnType getItem(@RequestParam("id")Integer id){
-        ItemModel itemModel = itemService.getItemById(id);
+        String itemKey = "item_"+id;
+        // 先在本地缓存取
+        ItemModel itemModel = (ItemModel) cacheService.getCommonCache(itemKey);
+        if (itemModel==null){
+            // 本地缓存不存在, 取redis中取
+            itemModel = (ItemModel) redisTemplate.opsForValue().get(itemKey);
+            if (itemModel==null) {
+                // redis缓存也不存在，去数据库中取
+                itemModel = itemService.getItemById(id);
+                redisTemplate.opsForValue().set(itemKey, itemModel);
+                redisTemplate.expire(itemKey, 10, TimeUnit.MINUTES);
+            }
+            cacheService.setCommonCache(itemKey,itemModel);
+        }
         ItemVO itemVO = convertVOFromModel(itemModel);
         return CommonReturnType.create(itemVO);
     }

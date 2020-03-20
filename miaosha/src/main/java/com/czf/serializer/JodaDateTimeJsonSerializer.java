@@ -18,3 +18,4 @@ public class JodaDateTimeJsonSerializer extends JsonSerializer<DateTime> {
         jsonGenerator.writeString(dateTime.toString("yyyy-MM-dd HH:mm:ss"));
     }
 }
+

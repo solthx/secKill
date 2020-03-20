@@ -13,9 +13,12 @@ import com.czf.validator.ValidatorImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -33,6 +36,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private ValidatorImpl validator;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @Override
     public UserModel getUserById(Integer id) {
@@ -98,6 +104,33 @@ public class UserServiceImpl implements UserService {
         // 比对用户信息内加密的密码是否和传输来进来的密码相匹配
         if (!com.alibaba.druid.util.StringUtils.equals(encrptPassword, userPasswordDO.getEncrptPassword()))
             throw  new BusinessException(EmBusinessError.USER_LOGIN_FAIL,"用户手机号或密码错误");
+        return userModel;
+    }
+
+    /**
+     * 返回该用户是否已经注册
+     * @param telphone
+     * @return
+     */
+    @Override
+    public boolean hasRegistered(String telphone) {
+        return userDOMapper.selectByTelphone(telphone)!=null;
+    }
+
+    /**
+     * 从redis中获取对象
+     *
+     * @param id
+     * @return
+     */
+    @Override
+    public UserModel getUserByIdInCache(Integer id) {
+        UserModel userModel = (UserModel) redisTemplate.opsForValue().get("user_validate_"+id);
+        if (userModel==null){
+            userModel = this.getUserById(id);
+            redisTemplate.opsForValue().set("user_validate_"+id, userModel);
+            redisTemplate.expire("user_validate_"+id, 10, TimeUnit.SECONDS);
+        }
         return userModel;
     }
 

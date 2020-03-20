@@ -29,4 +29,13 @@ public interface UserService {
      * @throws BusinessException
      */
     UserModel validateLogin(String telphone, String encrptPassword) throws BusinessException;
+
+    boolean hasRegistered(String telphone);
+
+    /**
+     * 从redis中获取对象
+     * @param id
+     * @return
+     */
+    UserModel getUserByIdInCache(Integer id);
 }
