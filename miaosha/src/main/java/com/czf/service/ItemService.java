@@ -31,11 +31,32 @@ public interface ItemService {
     ItemModel getItemById(Integer id);
 
     /**
-     * 库存扣减
+     * 扣减库存第一步：从缓存中扣减库存
+     *
+     * ps: 真正的库存扣减被分为如下两步：
+     *      1. 从缓存中扣减库存
+     *      2. 从数据库中扣减库存 (由消息队列通知
+     *
      * @param itemId
      * @return
      */
-    boolean decreaseStock(Integer itemId, Integer amount) throws BusinessException;
+    boolean decreaseStockInCache(Integer itemId, Integer amount);
+
+    /**
+     * 扣减库存第二步：发送message，异步扣减库存进数据库
+     * @param itemId
+     * @param amount
+     * @return
+     */
+    boolean asyncDecreaseStock(Integer itemId, Integer amount);
+
+    /**
+     * 回滚decreaseStockInCache
+     * @param itemId
+     * @param amount
+     * @return
+     */
+    boolean increaseStockInCache(Integer itemId, Integer amount);
 
     /**
      * 销量增加
@@ -52,4 +73,10 @@ public interface ItemService {
      */
     ItemModel getItemByIdInCache(Integer id);
 
+    /**
+     * 初始化库存流水
+     * @param itemId
+     * @param amount
+     */
+    String initStockLog(Integer itemId, Integer amount);
 }

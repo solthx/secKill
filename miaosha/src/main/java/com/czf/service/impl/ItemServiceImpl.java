@@ -2,12 +2,13 @@ package com.czf.service.impl;
 
 import com.czf.dao.ItemDOMapper;
 import com.czf.dao.ItemStockDOMapper;
-import com.czf.dao.PromoDOMapper;
+import com.czf.dao.StockLogDOMapper;
 import com.czf.dataobject.ItemDO;
 import com.czf.dataobject.ItemStockDO;
-import com.czf.dataobject.PromoDO;
+import com.czf.dataobject.StockLogDO;
 import com.czf.error.BusinessException;
 import com.czf.error.EmBusinessError;
+import com.czf.mq.MqProducer;
 import com.czf.service.ItemService;
 import com.czf.service.PromoService;
 import com.czf.service.model.ItemModel;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,12 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private PromoService promoService;
+
+    @Autowired
+    private MqProducer mqProducer;
+
+    @Autowired
+    private StockLogDOMapper stockLogDOMapper;
 
     /**
      * 创建一个商品, 并写入数据库
@@ -154,14 +162,54 @@ public class ItemServiceImpl implements ItemService {
     /**
      * 库存扣减
      *
+     * 到redis中减
+     *
      * @param itemId
      * @return
      */
     @Override
     @Transactional
-    public boolean decreaseStock(Integer itemId, Integer amount) {
-        int affectedRow = itemStockDOMapper.decreaseStock(itemId, amount);
-        return affectedRow>0 ? true : false;
+    public boolean decreaseStockInCache(Integer itemId, Integer amount) {
+        //int affectedRow = itemStockDOMapper.decreaseStock(itemId, amount);
+        // 在redis中减库存
+        // result为剩余库存数
+        long result = redisTemplate.opsForValue().increment("promo_item_stock_"+itemId, amount.intValue()*-1);
+        if (result>0){
+            // 更新成功
+            return true;
+        }else if (result==0){
+            // 更新成功，且打上库存售罄的标示
+            redisTemplate.opsForValue().set("promo_item_stock_invalid_"+itemId,"true");
+            return true;
+        }
+        this.increaseStockInCache(itemId, amount); // 回滚
+        return false;
+    }
+
+    /**
+     * 异步扣减库存
+     *
+     * @param itemId
+     * @param amount
+     * @return
+     */
+    @Override
+    public boolean asyncDecreaseStock(Integer itemId, Integer amount) {
+        boolean mqResult = mqProducer.asyncReduceStock(itemId, amount);
+        return mqResult;
+    }
+
+    /**
+     * 回滚decreaseStockInCache
+     *
+     * @param itemId
+     * @param amount
+     * @return
+     */
+    @Override
+    public boolean increaseStockInCache(Integer itemId, Integer amount) {
+        long rest = redisTemplate.opsForValue().increment("promo_item_stock_"+itemId, amount.intValue());
+        return rest>=0;
     }
 
     /**
@@ -204,5 +252,24 @@ public class ItemServiceImpl implements ItemService {
             redisTemplate.expire("item_validate_"+id, 10, TimeUnit.MINUTES);
         }
         return itemModel;
+    }
+
+    /**
+     * 初始化库存流水
+     *  @param itemId
+     * @param amount
+     * @return
+     */
+    @Override
+    @Transactional
+    public String initStockLog(Integer itemId, Integer amount) {
+        StockLogDO stockLogDO = new StockLogDO();
+        stockLogDO.setAmount(amount);
+        stockLogDO.setItemId(itemId);
+        // 使用UUID创建stock_log_id
+        stockLogDO.setStockLogId(UUID.randomUUID().toString().replace("-",""));
+        stockLogDO.setStatus(1);
+        stockLogDOMapper.insertSelective(stockLogDO);
+        return stockLogDO.getStockLogId();
     }
 }

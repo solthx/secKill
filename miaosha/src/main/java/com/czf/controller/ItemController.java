@@ -5,6 +5,7 @@ import com.czf.error.BusinessException;
 import com.czf.response.CommonReturnType;
 import com.czf.service.CacheService;
 import com.czf.service.ItemService;
+import com.czf.service.PromoService;
 import com.czf.service.model.ItemModel;
 import com.czf.service.model.PromoModel;
 import org.joda.time.format.DateTimeFormat;
@@ -38,6 +39,9 @@ public class ItemController extends BaseController {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private PromoService promoService;
 
     /**
      * 创建商品
@@ -124,5 +128,17 @@ public class ItemController extends BaseController {
             return convertVOFromModel(itemModel);
         }).collect(Collectors.toList());
         return CommonReturnType.create(itemVOList);
+    }
+
+
+    /**
+     * 模拟运营，发布活动
+     * @return
+     */
+    @RequestMapping(value = "/publishpromo", method = {RequestMethod.GET})
+    @ResponseBody
+    public CommonReturnType publishPromo(@RequestParam(name = "id")Integer promoId){
+        promoService.publishPromo(promoId);
+        return CommonReturnType.create(null);
     }
 }

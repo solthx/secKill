@@ -2,7 +2,9 @@ package com.czf.controller;
 
 import com.czf.error.BusinessException;
 import com.czf.error.EmBusinessError;
+import com.czf.mq.MqProducer;
 import com.czf.response.CommonReturnType;
+import com.czf.service.ItemService;
 import com.czf.service.OrderService;
 import com.czf.service.model.OrderModel;
 import com.czf.service.model.UserModel;
@@ -33,6 +35,12 @@ public class OrderController extends BaseController {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private MqProducer mqProducer;
+
+    @Autowired
+    private ItemService itemService;
+
     // 封装下单请求
     @RequestMapping(value = "createorder", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
     @ResponseBody
@@ -55,7 +63,19 @@ public class OrderController extends BaseController {
         if (userModel==null)
             throw new BusinessException(EmBusinessError.USER_NOT_LOGIN, "用户仍未登陆, 请登陆后下单");
 
-        OrderModel orderModel = orderService.createOrder(userModel.getUid(),promoId, itemId, amount);
-        return CommonReturnType.create(orderModel);
+        //OrderModel orderModel = orderService.createOrder(userModel.getUid(),promoId, itemId, amount);
+
+        // 判断是否售罄
+        if (redisTemplate.hasKey("promo_item_stock_invalid_"+itemId))
+            throw new BusinessException(EmBusinessError.STOCK_NOT_ENOUGH);
+
+        // 加入库存流水init状态
+        String stockLogId = itemService.initStockLog(itemId, amount);
+
+        // 再去完成对应的"下单"事务型消息
+        if (!mqProducer.transactionAsyncReduceStock(itemId,amount,promoId,userModel.getUid(), stockLogId))
+            throw new BusinessException(EmBusinessError.UNKNOWN_ERROR,"下单失败!");
+
+        return CommonReturnType.create(null);
     }
 }

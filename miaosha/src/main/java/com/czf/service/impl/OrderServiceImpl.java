@@ -2,8 +2,10 @@ package com.czf.service.impl;
 
 import com.czf.dao.OrderDOMapper;
 import com.czf.dao.SequenceDOMapper;
+import com.czf.dao.StockLogDOMapper;
 import com.czf.dataobject.OrderDO;
 import com.czf.dataobject.SequenceDO;
+import com.czf.dataobject.StockLogDO;
 import com.czf.error.BusinessException;
 import com.czf.error.EmBusinessError;
 import com.czf.service.ItemService;
@@ -12,7 +14,6 @@ import com.czf.service.UserService;
 import com.czf.service.model.ItemModel;
 import com.czf.service.model.OrderModel;
 import com.czf.service.model.UserModel;
-import org.apache.tomcat.jni.Local;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,9 +43,12 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private SequenceDOMapper sequenceDOMapper;
 
+    @Autowired
+    private StockLogDOMapper stockLogDOMapper;
+
     @Override
     @Transactional
-    public OrderModel createOrder(Integer userId,Integer promoId, Integer itemId, Integer amount) throws BusinessException {
+    public OrderModel createOrder(Integer userId,Integer promoId, Integer itemId, Integer amount, String stockLogId) throws BusinessException {
         /**
          * 1. 检验下单状态：
          *      1. 用户是否合法
@@ -77,7 +81,7 @@ public class OrderServiceImpl implements OrderService {
          * 2. 落单减库存
          */
 
-        boolean result = itemService.decreaseStock(itemId,amount);
+        boolean result = itemService.decreaseStockInCache(itemId,amount);
         if ( !result )
             throw new BusinessException(EmBusinessError.STOCK_NOT_ENOUGH);
 
@@ -108,10 +112,25 @@ public class OrderServiceImpl implements OrderService {
 
         // 增加销量
         int sav = itemService.increaseSales(itemId, amount);
+
+        // 设置库存流水状态为成功
+        StockLogDO stockLogDO = stockLogDOMapper.selectByPrimaryKey(stockLogId);
+        if (stockLogDO==null)
+            throw  new BusinessException(EmBusinessError.UNKNOWN_ERROR);
+        stockLogDO.setStatus(2);
+        stockLogDOMapper.updateByPrimaryKeySelective(stockLogDO);
+
+
+//        boolean mqResult = itemService.asyncDecreaseStock(itemId, amount);
+//        if (!mqResult){
+//            // 回滚库存
+//            itemService.increaseStockInCache(itemId, amount);
+//            throw new BusinessException(EmBusinessError.MQ_SEND_ERROR);
+//        }
+
         /**
          * 4. 返回给前前端
          */
-
         return orderModel;
     }
 
