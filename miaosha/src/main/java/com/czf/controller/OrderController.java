@@ -6,6 +6,7 @@ import com.czf.mq.MqProducer;
 import com.czf.response.CommonReturnType;
 import com.czf.service.ItemService;
 import com.czf.service.OrderService;
+import com.czf.service.PromoService;
 import com.czf.service.model.OrderModel;
 import com.czf.service.model.UserModel;
 import org.apache.commons.lang3.StringUtils;
@@ -41,12 +42,36 @@ public class OrderController extends BaseController {
     @Autowired
     private ItemService itemService;
 
-    // 封装下单请求
-    @RequestMapping(value = "createorder", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
+    @Autowired
+    private PromoService promoService;
+
+    // 生成秒杀令牌
+    @RequestMapping(value = "/generatetoken", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
+    @ResponseBody
+    public CommonReturnType generateToken(@RequestParam("itemId")Integer itemId,
+                                        @RequestParam("promoId")Integer promoId) throws BusinessException {
+        // 根据token获取用户信息
+        String token = httpServletRequest.getParameterMap().get("token")[0];
+        if (StringUtils.isEmpty(token))
+            throw new BusinessException(EmBusinessError.USER_NOT_LOGIN, "用户仍未登陆, 请登陆后下单");
+        UserModel userModel = (UserModel)redisTemplate.opsForValue().get(token);
+        if (userModel==null)
+            throw new BusinessException(EmBusinessError.USER_NOT_LOGIN, "用户仍未登陆, 请登陆后下单");
+        // 获取秒杀访问令牌
+        String promoToken = promoService.generateSecondKillToken(promoId, itemId,userModel.getUid());
+        // 返回对应结果
+        if (promoToken==null)
+            throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR,"生成令牌失败");
+        return CommonReturnType.create(null);
+    }
+
+        // 封装下单请求
+    @RequestMapping(value = "/createorder", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
     @ResponseBody
     public CommonReturnType createOrder(@RequestParam("itemId")Integer itemId,
-                                        @RequestParam("promoId")Integer promoId,
-                                        @RequestParam("amount")Integer amount) throws BusinessException {
+                                        @RequestParam(value = "promoId",required = false)Integer promoId,
+                                        @RequestParam(value = "amount")Integer amount,
+                                        @RequestParam(value = "promoToken",required = false)String promoToken) throws BusinessException {
 
 //        throw new BusinessException(EmBusinessError.USER_NOT_LOGIN,"用户仍未登陆, 请登陆后下单");
 //        Boolean isLogin = (Boolean) httpServletRequest.getSession().getAttribute("IS_LOGIN");
@@ -56,13 +81,20 @@ public class OrderController extends BaseController {
 //        UserModel userModel = (UserModel) httpServletRequest.getSession().getAttribute("LOGIN_USER");
 
         // 获取用户的登陆信息 , 使用token的方式
+
         String token = httpServletRequest.getParameterMap().get("token")[0];
         if (StringUtils.isEmpty(token))
             throw new BusinessException(EmBusinessError.USER_NOT_LOGIN, "用户仍未登陆, 请登陆后下单");
         UserModel userModel = (UserModel)redisTemplate.opsForValue().get(token);
         if (userModel==null)
             throw new BusinessException(EmBusinessError.USER_NOT_LOGIN, "用户仍未登陆, 请登陆后下单");
+        if (promoId!=null) {
+            String inRedisPromoToken = (String) redisTemplate.opsForValue().get("promo_token_"+promoId+"_userId_"+userModel.getUid()+"_itemId_"+itemId);
 
+            if ( inRedisPromoToken==null /*||  !StringUtils.equals(promoToken, inRedisPromoToken)*/){
+                throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR,"秒杀令牌校验失败");
+            }
+        }
         //OrderModel orderModel = orderService.createOrder(userModel.getUid(),promoId, itemId, amount);
 
         // 判断是否售罄

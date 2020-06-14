@@ -19,4 +19,9 @@ public interface PromoService {
      * @param promoId
      */
     void publishPromo(Integer promoId);
+
+    /**
+     * 生成秒杀用的令牌
+     */
+    String generateSecondKillToken(Integer promoId,Integer itemId, Integer userId);
 }

@@ -9,7 +9,6 @@ import com.czf.service.PromoService;
 import com.czf.service.model.ItemModel;
 import com.czf.service.model.PromoModel;
 import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;

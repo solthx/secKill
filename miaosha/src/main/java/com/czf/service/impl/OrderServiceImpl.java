@@ -60,22 +60,22 @@ public class OrderServiceImpl implements OrderService {
         ItemModel itemModel = itemService.getItemByIdInCache(itemId);
         if ( itemModel==null )
             throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR, "商品信息不存在!");
-
-        UserModel userModel = userService.getUserById(userId);
-        if ( userModel==null )
-            throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR, "用户不存在!");
+//
+//        UserModel userModel = userService.getUserById(userId);
+//        if ( userModel==null )
+//            throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR, "用户不存在!");
 
         if ( amount<=0 || amount>99 )
             throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR, "数量信息不正确！");
         // 校验活动信息
-        if ( promoId!=null ){
-            // (1) 校验对应活动是否存在这个适用商品
-            if ( promoId != itemModel.getPromoModel().getId() )
-                throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR,"活动信息不正确！");
-            else if ( itemModel.getPromoModel().getStatus()!=2 )
-                throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR,"活动尚未开始！");
-
-        }
+//        if ( promoId!=null ){
+//            // (1) 校验对应活动是否存在这个适用商品
+//            if ( promoId != itemModel.getPromoModel().getId() )
+//                throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR,"活动信息不正确！");
+//            else if ( itemModel.getPromoModel().getStatus()!=2 )
+//                throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR,"活动尚未开始！");
+//
+//        }
 
         /**
          * 2. 落单减库存
